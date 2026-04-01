@@ -5,9 +5,9 @@ pipeline {
         POLARIS_TOKEN = credentials('POLARIS_TOKEN')
     }
 
-    // This section tells Jenkins to provide Maven automatically
     tools {
-        maven 'maven3' // Ensure this name matches what is in Manage Jenkins -> Tools
+        // Updated to match your Jenkins configuration
+        maven 'maven-3.9.11' 
     }
  
     stages {
@@ -15,7 +15,7 @@ pipeline {
             steps {
                 sh '''
                     curl -fLsS -o bridge.zip \
-                      https://repo.blackduck.com/bds-integrations-release/com/blackduck/integration/bridge/binaries/bridge-cli-bundle/latest/bridge-cli-bundle-linux64.zip
+                      https://blackduck.com
                     
                     unzip -qo bridge.zip
                     
@@ -29,7 +29,7 @@ pipeline {
                 sh '''
                     ./bridge-cli-bundle-linux64/bridge-cli \
                     --stage polaris \
-                    polaris.serverUrl=https://poc.polaris.blackduck.com \
+                    polaris.serverUrl=https://blackduck.com \
                     polaris.accessToken=$POLARIS_TOKEN \
                     polaris.application.name=Nirmal_SCM \
                     polaris.project.name=WebGoat \
