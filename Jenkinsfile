@@ -17,15 +17,17 @@ pipeline {
             }
         }
  
-        stage('Run Polaris Scan') {
+                stage('Run Polaris Scan') {
             steps {
                 sh '''
                     ./bridge-cli-bundle-linux64/bridge-cli \
-                    --server-url=https://poc.polaris.blackduck.com \
-                    --access-token=$POLARIS_TOKEN \
-                    --assessment-types=SAST,SCA
+                    --stage polaris \
+                    polaris.serverUrl=https://poc.polaris.blackduck.com \
+                    polaris.accessToken=$POLARIS_TOKEN \
+                    polaris.assessment.types=SAST,SCA
                 '''
             }
         }
+
     }
 }
