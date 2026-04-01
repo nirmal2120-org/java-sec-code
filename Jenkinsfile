@@ -2,19 +2,11 @@ pipeline {
     agent any
  
     environment {
-        JAVA_HOME = '/usr/lib/jvm/java-25-openjdk'
-        PATH = "${JAVA_HOME}/bin:${env.PATH}"
+      
         POLARIS_TOKEN = credentials('POLARIS_TOKEN')
     }
  
     stages {
- 
-        stage('Verify Java') {
-            steps {
-                sh 'echo JAVA_HOME=$JAVA_HOME'
-                sh 'java -version'
-            }
-        }
  
         stage('Build Application') {
             steps {
