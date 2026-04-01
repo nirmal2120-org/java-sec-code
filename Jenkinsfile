@@ -26,6 +26,9 @@ pipeline {
                     --stage polaris \
                     polaris.serverUrl=https://poc.polaris.blackduck.com \
                     polaris.accessToken=$POLARIS_TOKEN \
+                     polaris.application.name=Nirmal_SCM \
+                     polaris.project.name=WebGoat \
+                     polaris.branch.name=Polaris-testing \
                     polaris.assessment.types=SAST,SCA
                 '''
             }
