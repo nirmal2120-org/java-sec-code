@@ -6,15 +6,20 @@ pipeline {
     }
  
     stages {
-        stage('Download Polaris Bridge CLI') {
+                stage('Download Polaris Bridge CLI') {
             steps {
                 sh '''
                     curl -fLsS -o bridge.zip \
                       https://repo.blackduck.com/bds-integrations-release/com/blackduck/integration/bridge/binaries/bridge-cli-bundle/latest/bridge-cli-bundle-linux64.zip
-                    unzip -q bridge.zip
+                    
+                    # Added -o to overwrite existing files automatically
+                    unzip -qo bridge.zip
+                    
                     chmod +x bridge-cli-bundle-linux64/bridge-cli
                 '''
             }
+        }
+
         }
  
                 stage('Run Polaris Scan') {
