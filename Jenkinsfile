@@ -30,6 +30,7 @@ pipeline {
                      polaris.project.name=WebGoat \
                      polaris.branch.name=Polaris-testing \
                     polaris.assessment.types=SAST \
+                    polaris.assessment.mode=filesystem
                     polaris.waitForScan=true \
                     coverity.build.command="mvn clean install -DskipTests"
                 '''
