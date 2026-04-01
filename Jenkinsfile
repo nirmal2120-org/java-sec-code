@@ -8,13 +8,7 @@ pipeline {
  
     stages {
  
-        stage('Build Application') {
-            steps {
-                // Fix: Grant execution permission to the wrapper
-                sh 'chmod +x mvnw'
-                sh './mvnw clean install -DskipTests'
-            }
-        }
+      
  
         stage('Download Polaris Bridge CLI') {
             steps {
