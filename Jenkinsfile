@@ -19,8 +19,8 @@ pipeline {
                 '''
             }
         }
-
-        }
+    }
+        
  
                 stage('Run Polaris Scan') {
             steps {
