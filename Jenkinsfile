@@ -23,27 +23,24 @@ pipeline {
                 '''
             }
         }
-
-                stage('Run Polaris Scan') {
-            steps {
-                sh '''
-                    ./bridge-cli-bundle-linux64/bridge-cli \
-                    --stage polaris \
-                    polaris.serverUrl=https://blackduck.com \
-                    polaris.accessToken=$POLARIS_TOKEN \
-                    polaris.application.name=Nirmal_SCM \
-                    polaris.project.name=WebGoat \
-                    polaris.branch.name=Polaris-testing \
-                    polaris.assessment.types=SAST,SCA \
-                    polaris.waitForScan=true \
-                    polaris.reports.sarif.create=true \
-                    # Fix: Changed hyphen to camelCase
-                    polaris.breakBuild=false \
-                    coverity.build.command="mvn clean install -DskipTests -DskipITs -Dmaven.test.skip=true -Dgpg.skip=true -fae"
-                '''
-            }
-        }
-
+stage('Run Polaris Scan') {
+    steps {
+        sh '''
+            ./bridge-cli-bundle-linux64/bridge-cli \
+            --stage polaris \
+            polaris.serverUrl=https://poc.polaris.blackduck.com \
+            polaris.accessToken=$POLARIS_TOKEN \
+            polaris.application.name=Nirmal_SCM \
+            polaris.project.name=WebGoat \
+            polaris.branch.name=Polaris-testing \
+            polaris.assessment.types=SAST,SCA \
+            polaris.waitForScan=true \
+            polaris.reports.sarif.create=true \
+            polaris.breakBuild=false \
+            coverity.build.command="mvn clean install -DskipTests -DskipITs -Dmaven.test.skip=true -Dgpg.skip=true -fae"
+        '''
+    }
+}
 
     }
 }
