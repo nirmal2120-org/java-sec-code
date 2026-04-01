@@ -36,6 +36,8 @@ pipeline {
                     polaris.branch.name=Polaris-testing \
                     polaris.assessment.types=SAST,SCA \
                     polaris.waitForScan=true \
+                    polaris.reports.sarif.create=true \
+                    polaris.break-build=false \
                     coverity.build.command="mvn clean install -DskipTests"
                 '''
             }
