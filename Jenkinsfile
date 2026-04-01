@@ -34,7 +34,7 @@ pipeline {
                     polaris.application.name=Nirmal_SCM \
                     polaris.project.name=WebGoat \
                     polaris.branch.name=Polaris-testing \
-                    polaris.assessment.types=SAST,SCA \
+                    polaris.assessment.types=SAST\
                     polaris.waitForScan=true \
                     polaris.reports.sarif.create=true \
                     coverity.build.command="mvn clean install -DskipTests"
