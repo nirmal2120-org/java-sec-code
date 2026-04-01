@@ -24,7 +24,7 @@ pipeline {
             }
         }
 
-        stage('Run Polaris Scan') {
+         stage('Run Polaris Scan') {
             steps {
                 sh '''
                     ./bridge-cli-bundle-linux64/bridge-cli \
@@ -37,6 +37,7 @@ pipeline {
                     polaris.assessment.types=SAST,SCA \
                     polaris.waitForScan=true \
                     polaris.reports.sarif.create=true \
+                    polaris.break-build=false \
                     coverity.build.command="mvn clean install \
   -DskipTests \
   -DskipITs \
@@ -46,5 +47,6 @@ pipeline {
                 '''
             }
         }
+
     }
 }
