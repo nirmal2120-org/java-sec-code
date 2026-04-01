@@ -1,65 +1,46 @@
 pipeline {
-
     agent any
  
     environment {
-
-        POLARIS_TOKEN = credentials('POLARIS_TOKEN')
-
+        JAVA_HOME = '/usr/lib/jvm/java-25-openjdk'
+        PATH = "${JAVA_HOME}/bin:${env.PATH}"
+        POLARIS_TOKEN = credentials('Sid')
     }
  
     stages {
  
-        stage('Build Application') {
-
+        stage('Verify Java') {
             steps {
-
-                sh 'chmod +x mvnw'
-
-                sh './mvnw clean install -DskipTests'
-
+                sh 'echo JAVA_HOME=$JAVA_HOME'
+                sh 'java -version'
             }
-
+        }
+ 
+        stage('Build Application') {
+            steps {
+                sh './mvnw clean install -DskipTests'
+            }
         }
  
         stage('Download Polaris Bridge CLI') {
-
             steps {
-
                 sh '''
-
-                    curl -L -o bridge.zip https://blackduck.com
-
+                    curl -L -o bridge.zip https://repo.blackduck.com/bds-integrations-release/com/synopsys/integration/bridge-cli/latest/bridge-cli-linux64.zip
                     unzip -o bridge.zip
-
                     chmod +x bridge-cli*/bridge-cli
-
                 '''
-
             }
-
         }
  
         stage('Run Polaris Scan') {
-
             steps {
-
                 sh '''
-
                     ./bridge-cli*/bridge-cli \
-
                     --server-url=https://poc.polaris.blackduck.com \
-
                     --access-token=$POLARIS_TOKEN \
-
                     --assessment-types=SAST,SCA
-
                 '''
-
             }
-
         }
-
     }
-
 }
