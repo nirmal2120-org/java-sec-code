@@ -4,6 +4,11 @@ pipeline {
     environment {
         POLARIS_TOKEN = credentials('POLARIS_TOKEN')
     }
+
+    // This section tells Jenkins to provide Maven automatically
+    tools {
+        maven 'maven3' // Ensure this name matches what is in Manage Jenkins -> Tools
+    }
  
     stages {
         stage('Download Polaris Bridge CLI') {
@@ -26,14 +31,14 @@ pipeline {
                     --stage polaris \
                     polaris.serverUrl=https://poc.polaris.blackduck.com \
                     polaris.accessToken=$POLARIS_TOKEN \
-                     polaris.application.name=Nirmal_SCM \
-                     polaris.project.name=WebGoat \
-                     polaris.branch.name=Polaris-testing \
+                    polaris.application.name=Nirmal_SCM \
+                    polaris.project.name=WebGoat \
+                    polaris.branch.name=Polaris-testing \
                     polaris.assessment.types=SAST,SCA \
                     polaris.waitForScan=true \
                     coverity.build.command="mvn clean install -DskipTests"
                 '''
             }
         }
-    } // This brace now correctly closes ALL stages
+    }
 }
