@@ -30,7 +30,7 @@ pipeline {
 
                     mvn --version
                     java --version
-                        mvn clean install -DskipTests -DskipITs -Dmaven.test.skip=true -Dgpg.skip=true -fae 
+                      
                         ./bridge-cli-bundle-linux64/bridge-cli \
                         --stage polaris \
                         polaris.serverUrl=https://poc.polaris.blackduck.com \
