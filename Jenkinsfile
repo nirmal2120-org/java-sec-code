@@ -25,8 +25,7 @@ pipeline {
         }
         stage('Run Polaris Scan') {
             steps {
-                // This block catches the Exit Code 2 from Polaris and ignores it
-                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+               
                     sh '''
                         ./bridge-cli-bundle-linux64/bridge-cli \
                         --stage polaris \
@@ -40,7 +39,7 @@ pipeline {
                         polaris.reports.sarif.create=true \
                         coverity.build.command="mvn clean install -DskipTests -DskipITs -Dmaven.test.skip=true -Dgpg.skip=true -fae"
                     '''
-                }
+                
             }
         }
 
