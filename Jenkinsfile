@@ -27,6 +27,10 @@ pipeline {
             steps {
                
                     sh '''
+
+                    mvn --version
+                    java --version
+                    ping google.com
                         ./bridge-cli-bundle-linux64/bridge-cli \
                         --stage polaris \
                         polaris.serverUrl=https://poc.polaris.blackduck.com \
