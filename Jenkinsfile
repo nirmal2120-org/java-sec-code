@@ -6,7 +6,6 @@ pipeline {
     }
 
     tools {
-        // This ensures the 'mvn' command is available in the path
         maven 'maven-3.9.11'
     }
 
@@ -44,4 +43,3 @@ pipeline {
         }
     }
 }
-``
