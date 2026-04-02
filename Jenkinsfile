@@ -38,7 +38,12 @@ pipeline {
                     polaris.assessment.types=SAST,SCA \
                     polaris.waitForScan=true \
                     polaris.reports.sarif.create=true \
-                    coverity.build.command="mvn clean install -DskipTests"
+                    
+                    coverity.build.command="mvn clean compile \
+  -DskipTests \
+  -DskipITs \
+  -Dmaven.test.skip=true \
+  -Dgpg.skip=true"
                 '''
             }
         }
