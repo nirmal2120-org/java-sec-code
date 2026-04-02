@@ -5,22 +5,25 @@ pool:
   vmImage: ubuntu-latest
 variables:
 - group: NIRMAL_SCA
+
 steps:
-- task: JavaToolInstaller@0
-  inputs:
-    versionSpec: '17'
-    jdkArchitectureOption: 'x64'
-    jdkSourceOption: 'PreInstalled'
-  displayName: 'Install Java'
-- bash: |
-    mvn --version
-    java -version
+  - checkout: self
+    fetchDepth: 0
 
+  - task: BlackDuckSecurityScan@2
+    displayName: 'Polaris SCA (Package + Signature)'
+    inputs:
+      POLARIS_SERVER_URL: $(POLARIS_SERVER_URL)
+      POLARIS_ACCESS_TOKEN: $(POLARIS_ACCESS_TOKEN)
 
-- task: BlackDuckSecurityScan@2
-  inputs:
-    scanType: 'blackducksca'
-    blackduckScaUrl: '$(POLARIS_SERVER_URL)'
-    blackduckScaToken: '$(POLARIS_ACCESS_TOKEN)'
-    blackduckScaWaitForScan: false
-    detectArgs: '--detect.project.name=Merganser --detect.project.version.name=main --detect.project.versionphase=DEVELOPMENT --detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING --detect.excluded.detector.types=GIT'
+      # Run SCA; add the SCA test type below to include Signature analysis too
+      POLARIS_ASSESSMENT_TYPES: 'SCA'
+      POLARIS_TEST_SCA_TYPE: 'SCA-SIGNATURE,SCA-PACKAGE'
+
+      # Optional quality-of-life settings
+      POLARIS_APPLICATION_NAME: quickstart-$(Build.Repository.Name)
+      POLARIS_PRCOMMENT_ENABLED: true
+      POLARIS_REPORTS_SARIF_CREATE: true
+      AZURE_TOKEN: $(System.AccessToken)
+      MARK_BUILD_STATUS: 'SucceededWithIssues'
+      INCLUDE_DIAGNOSTICS: true
