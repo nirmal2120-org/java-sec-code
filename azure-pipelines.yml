@@ -15,9 +15,7 @@ steps:
 - bash: |
     mvn --version
     java -version
-    mvn spotless:apply
-    mvn -N wrapper:wrapper
-    ./mvnw spotless:apply
+
 
 - task: BlackDuckSecurityScan@2
   inputs:
