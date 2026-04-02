@@ -55,13 +55,4 @@ pipeline {
             }
         }
     }
-
-    post {
-        success {
-            echo '✅ Polaris SAST & SCA scan completed successfully'
-        }
-        failure {
-            echo '❌ Pipeline failed — check logs above'
-        }
-    }
 }
