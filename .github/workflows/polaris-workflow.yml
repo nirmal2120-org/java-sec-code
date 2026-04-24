@@ -30,7 +30,7 @@ jobs:
         with:
           ### SCANNING: Required fields
           polaris_server_url: ${{ vars.POLARIS_SERVER_URL }}
-          polaris_access_token: ${{ secrets.POLARIS_ACCESS_TOKEN }}
+          polaris_access_token: ${{ secrets.POLARIS_ACCESS_TOKEN_NEW }}
           ### ASSESSMENT TYPES
           polaris_assessment_types: SAST,SCA  # Comma-separated list: SAST,SCA,DAST
           ### SCANNING: Optional fields
