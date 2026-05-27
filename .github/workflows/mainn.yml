@@ -50,10 +50,10 @@ jobs:
         env:
           BD_TOKEN: ${{ secrets.BD_TOKEN }}
         run: |
-          ./bridge-cli-bundle-linux64/bridge-cli --stage blackduck \
-            blackduck.url=https://expressonboarding.app.blackduck.com \
-            blackduck.api.token=$BD_TOKEN \
-            blackduck.project.name=NodeGoat \
-            blackduck.project.version.name=main \
-            blackduck.scan.mode=INTELLIGENT \
-            blackduck.policy.check.fail.on.severities=CRITICAL,HIGH
+          ./bridge-cli-bundle-linux64/bridge-cli --stage blackducksca \
+            blackducksca.url=https://expressonboarding.app.blackduck.com \
+            blackducksca.api.token=$BD_TOKEN \
+            blackducksca.project.name=NodeGoat \
+            blackducksca.project.version.name=main \
+            blackducksca.scan.mode=INTELLIGENT \
+            blackducksca.policy.check.fail.on.severities=CRITICAL,HIGH
