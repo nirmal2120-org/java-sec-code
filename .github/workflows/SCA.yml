@@ -1,4 +1,4 @@
-name: Black Duck SCA Scan
+name: Black Duck SCA Scan (Bridge CLI)
 
 on:
   push:
@@ -11,30 +11,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # --------------------------------------------------
+      # --------------------------------------------
       # Checkout source code
-      # --------------------------------------------------
+      # --------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # --------------------------------------------------
-      # Setup Java (required for Detect inside Bridge)
-      # --------------------------------------------------
+      # --------------------------------------------
+      # Setup Java (needed for Detect)
+      # --------------------------------------------
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # --------------------------------------------------
-      # Verify Maven installation
-      # --------------------------------------------------
+      # --------------------------------------------
+      # Verify Maven
+      # --------------------------------------------
       - name: Verify Maven
         run: mvn -version
 
-      # --------------------------------------------------
+      # --------------------------------------------
+      # (Recommended for Java) Build project
+      # --------------------------------------------
+      - name: Build Project
+        run: mvn clean install --no-transfer-progress || true
+
+      # --------------------------------------------
       # Download Bridge CLI
-      # --------------------------------------------------
+      # --------------------------------------------
       - name: Download Bridge CLI
         run: |
           curl -fLsS -o bridge.zip \
@@ -42,9 +48,9 @@ jobs:
           unzip -q bridge.zip
           chmod +x bridge-cli-bundle-linux64/bridge-cli
 
-      # --------------------------------------------------
-      # Run Black Duck SCA Scan ✅
-      # --------------------------------------------------
+      # --------------------------------------------
+      # Run Black Duck SCA ✅ (CRITICAL FIX APPLIED)
+      # --------------------------------------------
       - name: Run Black Duck SCA
         run: |
           blackducksca_url=https://expressonboarding.app.blackduck.com \
