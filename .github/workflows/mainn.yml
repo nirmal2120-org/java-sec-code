@@ -1,24 +1,44 @@
-name: Black Duck Scan
+name: Black Duck SCA Scan
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - Polaris-testing
+  workflow_dispatch:
 
 jobs:
-  blackduck-scan:
+  blackduck:
     runs-on: ubuntu-latest
 
     steps:
+      # --------------------------------------------------
+      # Checkout source code
+      # --------------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # --------------------------------------------------
+      # Setup Java (needed for some detectors)
+      # --------------------------------------------------
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # --------------------------------------------------
+      # Download Bridge CLI
+      # --------------------------------------------------
       - name: Download Bridge CLI
         run: |
           curl -fLsS -o bridge.zip \
-          https://repo.blackduck.com/bds-integrations-release/com/blackduck/integration/bridge/binaries/bridge-cli-bundle/latest/bridge-cli-bundle-linux64.zip
-          unzip -qo bridge.zip
+            https://repo.blackduck.com/bds-integrations-release/com/blackduck/integration/bridge/binaries/bridge-cli-bundle/latest/bridge-cli-bundle-linux64.zip
+          unzip -q bridge.zip
           chmod +x bridge-cli-bundle-linux64/bridge-cli
 
+      # --------------------------------------------------
+      # Run Black Duck SCA Scan
+      # --------------------------------------------------
       - name: Run Black Duck SCA
         env:
           BD_TOKEN: ${{ secrets.BD_TOKEN }}
