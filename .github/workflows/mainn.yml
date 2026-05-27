@@ -1,3 +1,5 @@
+name: Black Duck SCA Scan
+
 on:
   push:
     branches:
@@ -5,30 +7,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  polaris:
+  blackduck:
     runs-on: ubuntu-latest
 
     steps:
-      # --------------------------------------------------
+
+      # --------------------------------------------
       # Checkout source code
-      # --------------------------------------------------
+      # --------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # --------------------------------------------------
-      # Setup Java (recommended LTS version)
-      # --------------------------------------------------
+      # --------------------------------------------
+      # Setup Java
+      # --------------------------------------------
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # --------------------------------------------------
-      # Verify Maven installation
-      # --------------------------------------------------
+      # --------------------------------------------
+      # Verify Maven
+      # --------------------------------------------
       - name: Verify Maven
         run: mvn -version
+
       # --------------------------------------------
       # Download Bridge CLI
       # --------------------------------------------
@@ -40,7 +44,7 @@ jobs:
           chmod +x bridge-cli-bundle-linux64/bridge-cli
 
       # --------------------------------------------
-      # Run Black Duck SCA Scan
+      # Run Black Duck SCA
       # --------------------------------------------
       - name: Run Black Duck SCA
         env:
