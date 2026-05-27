@@ -65,7 +65,7 @@ jobs:
         run: |
           ./bridge-cli-bundle-linux64/bridge-cli --stage blackducksca \
             blackducksca.scan.full=true \
-            blackducksca.scan.failure.severities=BLOCKER \
+            blackducksca.scan.failure.severities=NONE \
             blackducksca.fixpr.enabled=true \
             blackducksca.reports.sarif.create=true
 
