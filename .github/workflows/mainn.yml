@@ -18,13 +18,19 @@ jobs:
         uses: actions/checkout@v4
 
       # --------------------------------------------------
-      # Setup Java (needed for some detectors)
+      # Setup Java (required for some detectors)
       # --------------------------------------------------
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
+      # --------------------------------------------------
+      # Verify Maven (optional but safe)
+      # --------------------------------------------------
+      - name: Verify Maven
+        run: mvn -version
 
       # --------------------------------------------------
       # Download Bridge CLI
@@ -44,9 +50,9 @@ jobs:
           BD_TOKEN: ${{ secrets.BD_TOKEN }}
         run: |
           ./bridge-cli-bundle-linux64/bridge-cli --stage blackduck \
-            blackduck.url=https://expressonboarding.app.blackduck.com \
-            blackduck.api.token=$BD_TOKEN \
-            blackduck.project.name=NodeGoat \
-            blackduck.project.version.name=main \
-            blackduck.scan.mode=INTELLIGENT \
-            blackduck.policy.check.fail.on.severities=CRITICAL,HIGH
+            --blackduck.url=https://expressonboarding.app.blackduck.com \
+            --blackduck.api.token=$BD_TOKEN \
+            --blackduck.project.name=NodeGoat \
+            --blackduck.project.version.name=main \
+            --blackduck.scan.mode=INTELLIGENT \
+            --blackduck.policy.check.fail.on.severities=CRITICAL,HIGH
