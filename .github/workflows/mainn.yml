@@ -1,0 +1,32 @@
+name: Black Duck Scan
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  blackduck-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Bridge CLI
+        run: |
+          curl -fLsS -o bridge.zip \
+          https://repo.blackduck.com/bds-integrations-release/com/blackduck/integration/bridge/binaries/bridge-cli-bundle/latest/bridge-cli-bundle-linux64.zip
+          unzip -qo bridge.zip
+          chmod +x bridge-cli-bundle-linux64/bridge-cli
+
+      - name: Run Black Duck SCA
+        env:
+          BD_TOKEN: ${{ secrets.BD_TOKEN }}
+        run: |
+          ./bridge-cli-bundle-linux64/bridge-cli --stage blackduck \
+            blackduck.url=https://expressonboarding.app.blackduck.com \
+            blackduck.api.token=$BD_TOKEN \
+            blackduck.project.name=NodeGoat \
+            blackduck.project.version.name=main \
+            blackduck.scan.mode=INTELLIGENT \
+            blackduck.policy.check.fail.on.severities=CRITICAL,HIGH
