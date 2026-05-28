@@ -82,7 +82,7 @@ jobs:
           ./bridge-cli-bundle-linux64/bridge-cli --stage blackducksca \
             blackducksca.scan.full=false \
             blackducksca.automation.prcomment=true \
-            blackducksca.detect.args="--detect.blackduck.rapid.compare.mode=NONE" \
+            --detect.blackduck.rapid.compare.mode=NONE \
             github.repository.pull.number=${{ github.event.number }}
 
       # ------------------------------------------
