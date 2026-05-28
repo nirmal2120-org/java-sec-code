@@ -67,6 +67,7 @@ jobs:
             blackducksca.scan.full=true \
             blackducksca.scan.failure.severities=NONE \
             blackducksca.fixpr.enabled=true \
+            blackducksca.rapid.compare.mode=NONE \
             blackducksca.reports.sarif.create=true
 
       # ------------------------------------------
