@@ -1,0 +1,96 @@
+name: Black Duck SCA (Bridge CLI)
+
+on:
+  push:
+    branches: [ main, master, develop, stage, release ]
+  pull_request:
+    branches: [ main, master, develop, stage, release ]
+  workflow_dispatch:
+
+jobs:
+  blackduck:
+    runs-on: ubuntu-latest
+
+    # ✅ Bridge configuration
+    env:
+      BRIDGE_BLACKDUCKSCA_URL: https://expressonboarding.app.blackduck.com
+      BRIDGE_BLACKDUCKSCA_TOKEN: ${{ secrets.BD_TOKEN }}
+      BRIDGE_GITHUB_USER_TOKEN: ${{ secrets.GIT_TOKEN }}
+      BRIDGE_GITHUB_REPOSITORY_OWNER_NAME: ${{ github.repository_owner }}
+      BRIDGE_GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
+      BRIDGE_GITHUB_REPOSITORY_BRANCH_NAME: ${{ github.ref_name }}
+
+    steps:
+    # ------------------------------------------
+    # Checkout code
+    # ------------------------------------------
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # ------------------------------------------
+    # Setup Java
+    # ------------------------------------------
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: temurin
+        cache: maven
+
+    # ------------------------------------------
+    # Build project
+    # ------------------------------------------
+    - name: Build
+      run: mvn -B -DskipTests package || true
+
+    # ------------------------------------------
+    # Download Bridge CLI
+    # ------------------------------------------
+    - name: Download Bridge CLI
+      run: |
+        curl -fLsS -o bridge.zip \
+          https://repo.blackduck.com/bds-integrations-release/com/blackduck/integration/bridge/binaries/bridge-cli-bundle/latest/bridge-cli-bundle-linux64.zip
+        unzip -q bridge.zip
+
+    # ------------------------------------------
+    # Full Scan (PUSH)
+    # ------------------------------------------
+    - name: Black Duck SCA Full Scan
+      if: github.event_name != 'pull_request'
+      env:
+        DETECT_PROJECT_NAME: ${{ github.event.repository.name }}
+        DETECT_PROJECT_VERSION_NAME: ${{ github.ref_name }}
+        DETECT_CODE_LOCATION_NAME: ${{ github.event.repository.name }}-${{ github.ref_name }}
+      run: |
+        ./bridge-cli-bundle-linux64/bridge-cli --stage blackducksca \
+          blackducksca.scan.full=true \
+          blackducksca.scan.failure.severities=NONE \
+          blackducksca.fixpr.enabled=true \
+          blackducksca.fixpr.github.token=${{ secrets.GIT_TOKEN }} \
+          blackducksca.reports.sarif.create=true
+
+    # ------------------------------------------
+    # PR Scan (PULL REQUEST)
+    # ------------------------------------------
+    - name: Black Duck SCA PR Scan
+      if: github.event_name == 'pull_request'
+      env:
+        DETECT_PROJECT_NAME: ${{ github.event.repository.name }}
+        DETECT_CODE_LOCATION_NAME: ${{ github.event.repository.name }}-${{ github.base_ref }}
+        BRIDGE_BREAK: "false"
+      run: |
+        ./bridge-cli-bundle-linux64/bridge-cli --stage blackducksca \
+          blackducksca.scan.full=false \
+          blackducksca.automation.prcomment=true \
+          github.repository.pull.number=${{ github.event.number }}
+
+    # ------------------------------------------
+    # (Optional) Upload logs
+    # ------------------------------------------
+    # - name: Upload Logs
+    #   if: always()
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: bridge-logs
+    #     path: ${{ github.workspace }}/.bridge
+    #     include-hidden-files: true
