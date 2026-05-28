@@ -79,7 +79,7 @@ jobs:
         BRIDGE_BREAK: "false"
       run: |
         ./bridge-cli-bundle-linux64/bridge-cli --stage blackducksca \
-          blackducksca.scan.full=false \
+          blackducksca.scan.full=true \
           blackducksca.automation.prcomment=true \
           github.repository.pull.number=${{ github.event.number }}
 
