@@ -67,7 +67,6 @@ jobs:
             blackducksca.scan.full=true \
             blackducksca.scan.failure.severities=NONE \
             blackducksca.fixpr.enabled=true \
-            blackducksca.rapid.compare.mode=NONE \
             blackducksca.reports.sarif.create=true
 
       # ------------------------------------------
@@ -83,6 +82,7 @@ jobs:
           ./bridge-cli-bundle-linux64/bridge-cli --stage blackducksca \
             blackducksca.scan.full=false \
             blackducksca.automation.prcomment=true \
+            blackducksca.rapid.compare.mode=NONE \
             github.repository.pull.number=${{ github.event.number }}
 
       # ------------------------------------------
