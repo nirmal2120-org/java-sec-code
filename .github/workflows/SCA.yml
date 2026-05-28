@@ -79,11 +79,12 @@ jobs:
           DETECT_CODE_LOCATION_NAME: ${{ github.event.repository.name }}-${{ github.base_ref }}
         run: |
           ./bridge-cli-bundle-linux64/bridge-cli --stage blackducksca \
-            blackducksca.scan.full=false \
-            blackducksca.automation.prcomment=true \
-            blackducksca.scan.failure.severities=NONE \
-            bridge.break=false \
-            github.repository.pull.number=${{ github.event.number }}
+            --blackducksca.scan.full=false \
+            --blackducksca.automation.prcomment=true \
+            --blackducksca.scan.failure.severities=NONE \
+            --bridge.break=false \
+            --github.repository.pull.number=${{ github.event.number }}
+
 
       # ------------------------------------------
       # (Optional) Upload logs
