@@ -82,6 +82,7 @@ jobs:
             blackducksca.scan.full=false \
             blackducksca.automation.prcomment=true \
             blackducksca.scan.failure.severities=NONE \
+            bridge.break=false \
             github.repository.pull.number=${{ github.event.number }}
 
       # ------------------------------------------
