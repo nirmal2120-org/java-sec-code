@@ -49,7 +49,7 @@ jobs:
       - name: Run Polaris SAST
         env:
           POLARIS_SERVER_URL: ${{ vars.POLARIS_SERVER_URL }}
-          POLARIS_ACCESS_TOKEN: ${{ secrets.POLARIS_ACCESS_TOKEN }}
+          POLARIS_ACCESS_TOKEN: ${{ secrets.POLARIS_ACCESS_TOKEN_NEW }}
         run: |
           ./bridge-cli-bundle-linux64/bridge-cli \
             --stage polaris \
