@@ -1,0 +1,273 @@
+include:
+  - project: 'blackduck-inc/black-duck-security-scan'
+    ref: 'v2.0.0'
+    file: 'templates/security_scan.yml'
+
+stages:
+  - build
+  - test
+
+variables:
+  ABE_IMAGE_TAG:
+    value: latest
+    description: version tag of the container image to use for building
+  ABE_GIT_REF:
+    value: master
+    description: git version of ABE to set up
+  ADS_BUILDER_TAG:
+    value: annax-abe-builder
+    description: runner tag (additional to 'docker') to pick for abe_build job
+  AFTER_SCRIPT_CLEAN:
+    value: "true"
+    description: Boolean to enable or disable git clean after build
+    options:
+      - "true"
+      - "false"
+  HOSTS_ENTRIES:
+    value: |
+      10.135.0.17 svn.axis.annax.ch
+      127.0.0.1   abe_proxy
+      127.0.0.1   annax-buildcache.wabtec.com
+      127.0.0.1   lindev4.wabtec.com
+      # rewrite from lindev4.wabtec.com -> abe_proxy (==127.0.0.1).
+      # required by old yocto configs: https://gitlab.corp.wabtec.com/annax/ads/yocto/meta-annax-image-x11/-/blob/ABE/0.4.3.0/conf_templates/local_releasebuild.conf?ref_type=tags
+    description: additional /etc/hosts entries for services not reachable via dns
+  PTXCONF_SETUP_PTXMIRROR:
+    value: http://abe_proxy/download/ptxdist_cache
+    description: server to download ptxdist external sources
+  ABE_SETUP_EXTRA_ARGS:
+    value: ""
+    description: "extra arguments passed to 'abe setup'"
+  ADS_CREATE_OS_CONTAINER:
+    value: "false"
+    description: Boolean to enable or disable creating an os container
+    options:
+      - "true"
+      - "false"
+  ABE_SETUP_NPROC:
+    value: "10"
+    description: Number of parallel "abe setup" processes to spawn for cloning
+  ARTIFACTORY_REPO:
+    value: "pis-generic-local/annax/ads"
+    description: "artifactory repo to upload artifacts"
+
+.abe_build:
+  tags:
+    - $ADS_BUILDER_TAG
+    - docker
+  needs:
+    - job: configure
+      artifacts: true
+  stage: build
+  variables:
+    ABE_POST_SETUP_COMMAND: abe images
+    GIT_STRATEGY: clone
+  image:
+    # name: "$CI_REGISTRY/annax/ads/abe/$ABE_IMAGE_OS:$ABE_IMAGE_TAG"
+    name: "$CI_REGISTRY/annax/ads/containers/abe-builder/$ABE_IMAGE_OS:$ABE_IMAGE_TAG"
+    pull_policy: always
+  timeout: 48 hours
+  before_script:
+    - !reference [.setup_abe_repo, script]
+
+    # create server dependent cache directories
+    - |
+      mkdir -p  \
+        "$CI_PROJECT_DIR/.cache/downloads" \
+        "$CI_PROJECT_DIR/.cache/log" \
+        /home/abe/yocto/ \
+        /home/abe/.cache/abe/yocto/ \
+        /cache/sstate \
+        "/cache/abe/$CI_CONCURRENT_ID" \
+        "/cache/lindev_opt_$ABE_IMAGE_OS"
+
+    - ln -s "/cache/abe/$CI_CONCURRENT_ID" "/tmp/abe_dir/.cache"
+    - ln -s "$CI_PROJECT_DIR/.cache/downloads" "/home/abe/Downloads"
+    - ln -s "/cache/sstate" "/home/abe/.cache/abe/yocto/sstate"
+    - ln -s "/cache/sstate" "/home/abe/yocto/sstate-cache"
+    - ln -s "/cache/sstate" "$CI_PROJECT_DIR/.cache/sstate"
+
+    - chown abe:abe /cache/sstate "/cache/lindev_opt_$ABE_IMAGE_OS"
+
+    - |
+      for d in $(ls "/cache/lindev_opt_$ABE_IMAGE_OS");do
+        ln -sf "/cache/lindev_opt_$ABE_IMAGE_OS/$d" "/opt/$d"
+      done
+
+    - chown -R abe:abe "/home/abe/" "$CI_PROJECT_DIR" "/cache/abe/$CI_CONCURRENT_ID"
+
+    - . /tmp/abe_dir/.env
+    - echo "ENV:"
+    - env | grep -e "^ABE_" -e "^CI_" -e "^ADS_" | sort || true
+  script:
+    - abe config --system ptxdist.ptxrc.PTXCONF_SETUP_PTXMIRROR "$PTXCONF_SETUP_PTXMIRROR"
+    - |
+      sudo -H -E -u abe bash -e -x << EOS
+        set -o pipefail
+
+        export PATH="/tmp/abe_dir:$PATH"
+        abe config proxy.log.file "$CI_PROJECT_DIR/.cache/log/proxy.log"
+        abe proxy --fork
+        abe proxy --fork -p 80
+
+        cd "$CI_PROJECT_DIR"
+
+        [ -f /opt/rh/devtoolset-7/enable ] && . /opt/rh/devtoolset-7/enable
+
+        echo "ENV:"
+        env | grep -e "^ABE_" -e "^CI_" -e "^ADS_" | sort || true
+        set -ex
+
+        abe setup -j "${ABE_SETUP_NPROC:-10}" --prefix annax/ads $ABE_SETUP_EXTRA_ARGS | tee -a .cache/log/abe_setup.log
+        abe show -wgitlab | tee -a .cache/log/abe_setup.log
+
+        $ABE_POST_SETUP_COMMAND
+      EOS
+  after_script:
+    - $AFTER_SCRIPT_CLEAN && git clean -ffdx --exclude=.cache/log
+  cache:
+    - key: "abe"
+      paths:
+        - ".cache/download"
+        - ".cache/abe"
+  artifacts:
+    paths:
+      - ".cache/log"
+      - "build_dir/bitbake-cookerdaemon.log"
+      - "build_dir/tmp/work/*/*/*/temp/log.*"
+      - "build_dir/tmp/log/"
+      - "build_dir/tmp/conf/"
+      - "*/*/*/platform-*/logfile"
+      - "*/platform-*/logfile"
+    when: always
+  rules:
+    - if: '$ABE_SCANJOBS_ONLY == "true" && $CI_JOB_NAME == "abe_build"'
+      when: manual
+    - if: '$CI_COMMIT_TAG =~ /^ABE\//'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: manual
+      allow_failure: true
+
+.abe_build_and_upload:
+  extends: .abe_build
+  script:
+    - !reference [.abe_build, script]
+    - |
+      (
+        set -ex
+        # use IMAGES_REGISTRY_TOKEN instead of job token for permissions to reploace
+        # an existing branch build on the registry
+        export PRIVATE_TOKEN="$IMAGES_REGISTRY_TOKEN"
+        time abe ci package --jfrog "$ARTIFACTORY_REPO"
+      )
+
+
+.setup_abe_repo:
+  script:
+    - echo 'abe ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+    - echo -e "$HOSTS_ENTRIES" | sudo tee -a /etc/hosts
+    # allow http auth with gitlab
+    - git config --system "url.https://gitlab-ci-token:$CI_JOB_TOKEN@$CI_SERVER_HOST.insteadof" "https://$CI_SERVER_HOST"
+    - git config --system core.excludesfile /etc/gitignore
+    - git config --system init.defaultBranch master
+    - echo "/.cache" > /etc/gitignore
+    - |
+      (
+        set -ex
+        rm -rf /tmp/abe_dir
+        mkdir -p /tmp/abe_dir /opt
+        git clone -c advice.detachedHead=false --filter=blob:none \
+          --branch="${ABE_GIT_REF}" "https://${CI_SERVER_HOST}/annax/ads/abe.git" /tmp/abe_dir
+        touch /tmp/abe_dir/config/allow_external_usage
+        if [ -n "$ABE_IMAGE_OS" ]; then
+          echo "$ABE_IMAGE_OS" > /tmp/abe_dir/.host_os
+        fi
+        chmod -R ogu+rwX /tmp/abe_dir
+      )
+    - export PATH="/tmp/abe_dir:$PATH"
+    - export ABE_UID=515
+    - export ABE_GID=515
+    - export ABE_USERNAME=abe
+    - export ABE_HOMEDIR=/home/abe
+    - export ABE_DIR=/tmp/abe_dir/
+    - /tmp/abe_dir/scripts/docker-shared/run.sh
+    - jf c add --user="${WT_ARTIFACTORY_AUTH%:*}" --password="${WT_ARTIFACTORY_AUTH#*:}" --url=https://jfrog.de.corp.wabtec.com
+
+configure:
+  image:
+    # name: "$CI_REGISTRY/annax/ads/abe/alpine:$ABE_IMAGE_TAG"
+    name: "$CI_REGISTRY/annax/ads/containers/abe-builder/alpine:$ABE_IMAGE_TAG"
+  stage: build
+  tags:
+    - latest
+  script:
+    - !reference [.setup_abe_repo, script]
+    - |
+      if [ "$ABE_SCANJOBS_ONLY" = "true" ]; then
+        export ABE_SKIP_TAG_CHECK="1"
+      fi
+
+    - abe ci configure --jfrog "$ARTIFACTORY_REPO"
+  artifacts:
+    paths:
+      - abe.env
+    reports:
+      dotenv: abe.env
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^ABE\//'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+
+.polaris_sast_scan:
+  stage: build
+  extends: .abe_build
+  variables:
+    ABE_POST_SETUP_COMMAND: bash meta-annax-image/meta-annax-cato/script/polaris_install.sh && cp "$ADS_COVERITY_LICENSE" /tmp/license.dat && ./build.sh coverity
+  before_script:
+    - !reference [.abe_build, before_script]
+    - |
+      export PROJECT_VERSION_PREFIX=""
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        export PROJECT_VERSION_PREFIX="CATO_"
+        export CI_COMMIT_REF_NAME="${CI_COMMIT_TAG#ABE/}"
+      fi
+  script:
+    - !reference [.abe_build, script]
+    - polaris -c meta-annax-image/meta-annax-cato/conf/polaris.yml --co "project.name=$BLACKDUCK_PROJECT_NAME" --co "project.branch=${PROJECT_VERSION_PREFIX}${CI_COMMIT_REF_NAME}" analyze -w <<< "$POLARIS_TOKEN"
+  rules:
+    - if: $SCANS_ENABLED == "false"
+      when: never
+    - if: $ABE_SCANJOBS_ONLY == "true"
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $BLACKDUCK_PROJECT_NAME && $POLARIS_TOKEN && $POLARIS_SERVER_URL'
+      when: on_success
+    - if: '$BLACKDUCK_PROJECT_NAME && $POLARIS_TOKEN && $POLARIS_SERVER_URL'
+      when: manual
+      allow_failure: true
+
+
+.blackduck_sca_scan:
+  stage: build
+  extends: .abe_build
+  variables:
+    ABE_POST_SETUP_COMMAND: './build.sh bash ../blackduck_scan.sh'
+  before_script:
+    - curl -L -o ../blackduck_scan.sh "https://gitlab-ci-token:$CI_JOB_TOKEN@$CI_SERVER_HOST/annax/ads/tools/gitlab-ci/-/raw/master/src/yml/projects/blackduck_scan.sh"
+    - chmod +x ../blackduck_scan.sh
+    - !reference [.abe_build, before_script]
+  rules:
+    - if: $SCANS_ENABLED == "false"
+      when: never
+    - if: $ABE_SCANJOBS_ONLY == "true"
+    - if: '$BLACKDUCK_PROJECT_NAME && $BLACKDUCK_TOKEN && $BLACKDUCK_SERVER_URL'
+      when: manual
+      allow_failure: true
+
